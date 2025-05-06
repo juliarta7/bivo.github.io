@@ -2,123 +2,74 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Beranda Bivo</title>
+  <title>Aplikasi Ketik Suara</title>
   <style>
     body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #fff;
-      color: #333;
-      text-align: center;
+      font-family: Arial, sans-serif;
       padding: 20px;
+      max-width: 600px;
+      margin: auto;
     }
-
-    img.logo {
-      max-width: 120px;
-      margin-bottom: 20px;
+    textarea {
+      width: 100%;
+      height: 200px;
+      padding: 10px;
+      font-size: 16px;
     }
-
-    h2 {
-      font-size: 1.2em;
-      margin-bottom: 20px;
-    }
-
     button {
-      background-color: #28a745;
-      color: white;
-      padding: 12px 24px;
-      font-size: 1em;
-      border: none;
-      border-radius: 8px;
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
       cursor: pointer;
-      margin-bottom: 10px;
-    }
-
-    .note {
-      font-size: 0.9em;
-      color: #555;
-      margin-bottom: 20px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-    }
-
-    .card {
-      background-color: #f8f9fa;
-      border-radius: 12px;
-      padding: 15px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-
-    .card h3 {
-      margin: 0 0 8px;
-      font-size: 1em;
-      color: #007bff;
-    }
-
-    .card p {
-      font-size: 0.9em;
-      margin: 0;
-      color: #333;
-    }
-
-    @media (max-width: 600px) {
-      button {
-        width: 100%;
-      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Logo -->
-  <img src="logo.png" alt="Logo Bivo" class="logo">
-
-  <!-- Tulisan motivasi -->
-  <h2>Mari kita mulai hari ini dengan langkah cerdas</h2>
-
-  <!-- Tombol mikrofon -->
-  <button onclick="mulaiFitur()">Mulai Fitur</button>
-
-  <!-- Note -->
-  <div class="note">Ucapkan nama fitur untuk menuju fitur yang kamu inginkan</div>
-
-  <!-- Kotak-kotak fitur -->
-  <div class="grid">
-    <div class="card">
-      <h3>Masukan Stok</h3>
-      <p>Masukan produk yang anda jual</p>
-    </div>
-    <div class="card">
-      <h3>Catat Pemasukan</h3>
-      <p>Catat semua pendapatan harian anda</p>
-    </div>
-    <div class="card">
-      <h3>Catat Pengeluaran</h3>
-      <p>Catat setiap pengeluaran usaha</p>
-    </div>
-    <div class="card">
-      <h3>Status Kesehatan Bisnis</h3>
-      <p>Lihat kondisi usaha anda saat ini</p>
-    </div>
-    <div class="card">
-      <h3>Laporan Harian</h3>
-      <p>Dapatkan laporan aktivitas usaha</p>
-    </div>
-    <div class="card">
-      <h3>Chatbot</h3>
-      <p>Konsultasi dengan asisten cerdas</p>
-    </div>
-  </div>
+  <h2>Aplikasi Ketik Suara</h2>
+  <textarea id="textInput" placeholder="Tulis atau bicara di sini..."></textarea><br>
+  <button onclick="toggleMic()" id="micButton">🎤 Mulai Bicara</button>
 
   <script>
-    function mulaiFitur() {
-      alert("Fitur mikrofon diaktifkan (simulasi). Di tahap selanjutnya bisa dihubungkan dengan Speech Recognition API.");
-      // Bisa ditambahkan integrasi dengan Web Speech API di sini
+    const textInput = document.getElementById('textInput');
+    const micButton = document.getElementById('micButton');
+    let recognizing = false;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Browser kamu tidak mendukung Speech Recognition. Gunakan Google Chrome ya!");
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'id-ID'; // Ubah ke 'en-US' jika ingin bahasa Inggris
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event) => {
+      const hasil = event.results[0][0].transcript;
+      textInput.value += ' ' + hasil;
+    };
+
+    recognition.onerror = (event) => {
+      alert("Terjadi error: " + event.error);
+    };
+
+    recognition.onend = () => {
+      recognizing = false;
+      micButton.textContent = "🎤 Mulai Bicara";
+    };
+
+    function toggleMic() {
+      if (recognizing) {
+        recognition.stop();
+        recognizing = false;
+        micButton.textContent = "🎤 Mulai Bicara";
+      } else {
+        recognition.start();
+        recognizing = true;
+        micButton.textContent = "🛑 Stop Bicara";
+      }
     }
   </script>
 
