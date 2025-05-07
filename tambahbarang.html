@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tambah Barang</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to bottom, #0d47a1, #42a5f5);
+      color: #fff;
+    }
+    header {
+      background-color: #0d47a1;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+    header a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .container {
+      padding: 1rem;
+    }
+    .input-group {
+      background-color: #fff;
+      color: #000;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      border-radius: 10px;
+    }
+    .input-group label {
+      font-weight: bold;
+      display: block;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 0.4rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .hapus-btn {
+      background-color: red;
+      color: white;
+      border: none;
+      padding: 0.3rem 0.6rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    .produk {
+      background-color: #fff;
+      color: #000;
+      margin: 0.5rem 0;
+      padding: 1rem;
+      border-radius: 10px;
+    }
+    .produk h3 {
+      margin: 0 0 0.5rem;
+    }
+    .instruksi {
+      font-size: 0.9rem;
+      font-style: italic;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="home.html">☰ Menu</a>
+    <h1>Tambah Barang</h1>
+  </header>
+
+  <div class="container">
+    <div class="instruksi">
+      Silakan ucapkan data sesuai urutan:<br />
+      1. Nama Barang (Contoh: "Susu")<br />
+      2. Jumlah (Contoh: "5")<br />
+      3. Harga Modal (Contoh: "10000")<br />
+      4. Harga Jual (Contoh: "15000")
+    </div>
+
+    <div id="input-form">
+      <div class="input-group">
+        <label for="nama">Nama Barang</label>
+        <input type="text" id="nama" readonly placeholder="Contoh: Susu" />
+        <button class="hapus-btn" onclick="hapusKolom('nama')">Hapus</button>
+      </div>
+      <div class="input-group">
+        <label for="jumlah">Jumlah</label>
+        <input type="text" id="jumlah" readonly placeholder="Contoh: 5" />
+        <button class="hapus-btn" onclick="hapusKolom('jumlah')">Hapus</button>
+      </div>
+      <div class="input-group">
+        <label for="modal">Harga Modal</label>
+        <input type="text" id="modal" readonly placeholder="Contoh: 10000" />
+        <button class="hapus-btn" onclick="hapusKolom('modal')">Hapus</button>
+      </div>
+      <div class="input-group">
+        <label for="jual">Harga Jual</label>
+        <input type="text" id="jual" readonly placeholder="Contoh: 15000" />
+        <button class="hapus-btn" onclick="hapusKolom('jual')">Hapus</button>
+      </div>
+    </div>
+
+    <h2>Daftar Barang</h2>
+    <div id="katalog"></div>
+  </div>
+
+  <script>
+    const langkah = [
+      { id: 'nama', label: 'Nama Barang' },
+      { id: 'jumlah', label: 'Jumlah' },
+      { id: 'modal', label: 'Harga Modal' },
+      { id: 'jual', label: 'Harga Jual' },
+    ];
+
+    let indexLangkah = 0;
+    let data = {};
+
+    function startVoiceInput() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'id-ID';
+      recognition.start();
+
+      recognition.onresult = function (event) {
+        const result = event.results[0][0].transcript.trim();
+        const field = langkah[indexLangkah];
+        document.getElementById(field.id).value = result;
+        data[field.id] = result;
+        indexLangkah++;
+
+        if (indexLangkah >= langkah.length) {
+          tambahKeKatalog(data);
+          langkah.forEach(item => {
+            document.getElementById(item.id).value = "";
+          });
+          data = {};
+          indexLangkah = 0;
+        }
+
+        setTimeout(startVoiceInput, 1000);
+      };
+
+      recognition.onerror = function () {
+        setTimeout(startVoiceInput, 1000);
+      };
+    }
+
+    function tambahKeKatalog(data) {
+      const div = document.createElement('div');
+      div.className = 'produk';
+      div.innerHTML = `
+        <h3>${data.nama}</h3>
+        <p>Jumlah: ${data.jumlah}</p>
+        <p>Harga Modal: Rp${data.modal}</p>
+        <p>Harga Jual: Rp${data.jual}</p>
+        <button class="hapus-btn" onclick="this.parentElement.remove()">Hapus</button>
+      `;
+      document.getElementById('katalog').prepend(div);
+    }
+
+    function hapusKolom(id) {
+      document.getElementById(id).value = "";
+      data[id] = "";
+      indexLangkah = langkah.findIndex(l => l.id === id);
+    }
+
+    window.onload = () => {
+      startVoiceInput();
+    };
+  </script>
+</body>
+</html>
