@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BIVO - Aplikasi Mobile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f4f8;
+            text-align: center;
+            color: #333;
+        }
+
+        header {
+            background-color: #2962ff;
+            color: white;
+            padding: 20px 0;
+            font-size: 2.5em;
+            font-weight: bold;
+            letter-spacing: 2px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-container {
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            width: 150px;
+            height: auto;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .motivasi {
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            color: #555;
+            font-style: italic;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .fitur-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 45%;
+            /* Adjusted for two columns */
+            min-width: 150px;
+            padding: 15px;
+            font-size: 1em;
+            color: #2962ff;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            box-sizing: border-box;
+            background-color: transparent;
+            /* Make background transparent */
+        }
+
+        .fitur-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .fitur-button img {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 10px;
+            object-fit: contain;
+        }
+
+        /* Media query for smaller screens */
+        @media (max-width: 600px) {
+            nav {
+                flex-direction: column;
+            }
+
+            .fitur-button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>BIVO</header>
+
+    <div class="logo-container">
+        <img src="LOGO.png" alt="Logo BIVO" />
+    </div>
+
+    <div class="motivasi">
+        MARI KITA MULAI HARI INI DENGAN LANGKAH CERDAS
+    </div>
+
+    <nav>
+        <a href="tambah-barang.html" class="fitur-button">
+            <img src="1.png" alt="Logo Tambah Barang" />
+            TAMBAH BARANG
+        </a>
+        <a href="catat-pemasukan.html" class="fitur-button">
+            <img src="2.png" alt="Logo Catat Pemasukan" />
+            CATAT PEMASUKAN
+        </a>
+        <a href="catat-pengeluaran.html" class="fitur-button">
+            <img src="3.png" alt="Logo Catat Pengeluaran" />
+            CATAT PENGELUARAN
+        </a>
+        <a href="kesehatan-bisnis.html" class="fitur-button">
+            <img src="4.png" alt="Logo Kesehatan Bisnis" />
+            KESEHATAN BISNIS
+        </a>
+        <a href="laporan-harian.html" class="fitur-button">
+            <img src="5.png" alt="Logo Laporan Harian" />
+            LAPORAN HARIAN
+        </a>
+    </nav>
+
+</body>
+
+</html>

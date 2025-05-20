@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kesehatan Bisnis - BIVO</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f0f4f8;
+      color: #333;
+      padding: 0 20px 40px;
+    }
+
+    header {
+      background-color: #2962ff;
+      color: white;
+      padding: 15px 20px;
+      font-size: 1.8em;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      display: flex;
+      align-items: center;
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header button.back-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.3em;
+      cursor: pointer;
+      margin-right: 15px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+    }
+
+    header button.back-btn:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      padding: 30px 24px 40px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2962ff;
+      margin-bottom: 30px;
+    }
+
+    .periode-bar {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    select {
+      padding: 10px 18px;
+      font-size: 1em;
+      border-radius: 8px;
+      border: 1.5px solid #2962ff;
+      background: #f6f8ff;
+      color: #2962ff;
+      font-weight: bold;
+    }
+
+    .indikator-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .indikator-list li {
+      background: #f8fafc;
+      margin-bottom: 15px;
+      padding: 18px 24px;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+      font-size: 1.1em;
+      line-height: 1.5em;
+    }
+
+    .highlight {
+      font-weight: bold;
+      color: #2962ff;
+    }
+
+    .highlight.positif {
+      color: #1b5e20;
+    }
+
+    .highlight.negatif {
+      color: #b71c1c;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <button class="back-btn" title="Kembali ke Beranda" onclick="location.href='index.html'">&#8592;</button>
+    Kesehatan Bisnis
+  </header>
+
+  <div class="container">
+    <h2>Analisis Kesehatan Bisnis</h2>
+    <div class="periode-bar">
+      <label for="periode">Pilih Periode: </label>
+      <select id="periode">
+        <option value="Hari Ini">Hari Ini</option>
+        <option value="Kemarin">Kemarin</option>
+        <option value="Seminggu">Seminggu</option>
+        <option value="Sebulan">Sebulan</option>
+        <option value="Seluruhnya">Seluruhnya</option>
+      </select>
+    </div>
+
+    <ul class="indikator-list">
+      <li id="indikator-pendapatan"></li>
+      <li id="indikator-transaksi"></li>
+      <li id="indikator-stok"></li>
+      <li id="indikator-aruskas"></li>
+      <li id="indikator-tren"></li>
+    </ul>
+  </div>
+
+  <script>
+    // Fungsi bantu parsing tanggal
+    function parseTanggal(str) {
+      let d = new Date(str);
+      if (isNaN(d)) {
+        const match = str.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+        if (match) {
+          const [, dd, mm, yyyy] = match;
+          d = new Date(`${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`);
+        }
+      }
+      return d;
+    }
+
+    // Ambil data dari localStorage
+    function getRiwayat(key) {
+      const data = localStorage.getItem(key);
+      if (!data) return [];
+      try {
+        return JSON.parse(data);
+      } catch {
+        return [];
+      }
+    }
+
+    // Hitung total dengan filter periode
+    function sumByPeriod(data, getNominal, filterFn) {
+      return data.filter(filterFn).reduce((sum, item) => sum + getNominal(item), 0);
+    }
+
+    // Hitung jumlah transaksi (jumlah item pemasukan) dengan filter
+    function countTransaksi(data, filterFn) {
+      return data.filter(filterFn).length;
+    }
+
+    // Filter periode
+    function getPeriodFilters() {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const weekAgo = new Date(today);
+      weekAgo.setDate(today.getDate() - 6);
+      const monthAgo = new Date(today);
+      monthAgo.setMonth(today.getMonth() - 1);
+
+      return {
+        "Hari Ini": d => {
+          const t = parseTanggal(d.waktu);
+          return t >= today && t < new Date(today.getTime() + 24 * 60 * 60 * 1000);
+        },
+        "Kemarin": d => {
+          const t = parseTanggal(d.waktu);
+          return t >= yesterday && t < today;
+        },
+        "Seminggu": d => {
+          const t = parseTanggal(d.waktu);
+          return t >= weekAgo && t < new Date(today.getTime() + 24 * 60 * 60 * 1000);
+        },
+        "Sebulan": d => {
+          const t = parseTanggal(d.waktu);
+          return t >= monthAgo && t < new Date(today.getTime() + 24 * 60 * 60 * 1000);
+        },
+        "Seluruhnya": d => true
+      };
+    }
+
+    // Ambil nominal pemasukan dan pengeluaran
+    function getNominalPemasukan(item) {
+      return typeof item.hargaKotor === 'number'
+        ? item.hargaKotor
+        : (typeof item.total === 'number' ? item.total : 0);
+    }
+    function getNominalPengeluaran(item) {
+      return typeof item.total === 'number' ? item.total : 0;
+    }
+
+    // Format rupiah
+    function formatRupiah(angka) {
+      if (!angka) return 'Rp 0';
+      return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    // Ambil data stok barang
+    const stokBarang = JSON.parse(localStorage.getItem('bivo_daftar_barang') || '[]');
+
+    // Update indikator
+    function updateIndikator() {
+      const periode = document.getElementById('periode').value;
+      const periodFilters = getPeriodFilters();
+      const filterFn = periodFilters[periode];
+
+      const pemasukan = getRiwayat('riwayatPemasukan');
+      const pengeluaran = getRiwayat('riwayatPengeluaran');
+
+      // 1. Pendapatan vs Pengeluaran
+      const totalPemasukan = sumByPeriod(pemasukan, getNominalPemasukan, filterFn);
+      const totalPengeluaran = sumByPeriod(pengeluaran, getNominalPengeluaran, filterFn);
+      const profit = totalPemasukan - totalPengeluaran;
+      const pendapatanEl = document.getElementById('indikator-pendapatan');
+      if (profit >= 0) {
+        pendapatanEl.innerHTML = `Usaha kamu <span class="highlight positif">untung ${formatRupiah(profit)}</span> ${periode.toLowerCase()}.`;
+      } else {
+        pendapatanEl.innerHTML = `Usaha kamu <span class="highlight negatif">rugi ${formatRupiah(-profit)}</span> ${periode.toLowerCase()}.`;
+      }
+
+      // 2. Jumlah Transaksi dan perbandingan dengan periode sebelumnya
+      // Tentukan periode sebelumnya
+      const periodKeys = Object.keys(periodFilters);
+      const idx = periodKeys.indexOf(periode);
+      let prevFilterFn = () => false;
+      if (idx > 0) prevFilterFn = periodFilters[periodKeys[idx - 1]];
+
+      const transaksiSekarang = countTransaksi(pemasukan, filterFn);
+      const transaksiSebelumnya = countTransaksi(pemasukan, prevFilterFn);
+      const transaksiEl = document.getElementById('indikator-transaksi');
+      if (transaksiSebelumnya === 0) {
+        transaksiEl.textContent = "Belum ada data transaksi periode sebelumnya.";
+      } else {
+        const persen = ((transaksiSekarang - transaksiSebelumnya) / transaksiSebelumnya) * 100;
+        if (persen > 0) {
+          transaksiEl.innerHTML = `Transaksi <span class="highlight positif">naik ${persen.toFixed(1)}%</span> dibanding ${periodKeys[idx - 1].toLowerCase()}.`;
+        } else if (persen < 0) {
+          transaksiEl.innerHTML = `Transaksi <span class="highlight negatif">turun ${Math.abs(persen).toFixed(1)}%</span> dibanding ${periodKeys[idx - 1].toLowerCase()}.`;
+        } else {
+          transaksiEl.textContent = "Transaksi stabil dibanding periode sebelumnya.";
+        }
+      }
+
+      // 3. Stok bergerak/lambat (produk tidak terjual)
+      const produkTerjual = new Set();
+      pemasukan.filter(filterFn).forEach(item => {
+        if (item.pesanan) {
+          item.pesanan.forEach(p => produkTerjual.add(p.nama));
+        }
+      });
+      const produkLambat = stokBarang.filter(b => !produkTerjual.has(b.namaBarang.toLowerCase()));
+      const stokEl = document.getElementById('indikator-stok');
+      if (produkLambat.length === 0) {
+        stokEl.textContent = "Semua produk terjual pada periode ini.";
+      } else {
+        stokEl.innerHTML = `Produk tidak terjual: <span class="highlight negatif">${produkLambat.map(p => p.namaBarang).join(', ')}</span> ${periode.toLowerCase()}.`;
+      }
+
+      // 4. Arus kas
+      const arusKasEl = document.getElementById('indikator-aruskas');
+      if (profit >= 0) {
+        arusKasEl.innerHTML = `<span class="highlight positif">Arus kas positif</span>, kamu tidak defisit.`;
+      } else {
+        arusKasEl.innerHTML = `<span class="highlight negatif">Arus kas negatif</span>, waspada pengeluaran lebih besar dari pemasukan!`;
+      }
+
+      // 5. Tren penjualan (bandingkan 3 periode terakhir)
+      const getPemasukanPerPeriod = key => sumByPeriod(pemasukan, getNominalPemasukan, periodFilters[key]);
+      const last3Periods = periodKeys.slice(Math.max(0, idx - 2), idx + 1);
+      if (last3Periods.length < 3) {
+        document.getElementById('indikator-tren').textContent = "Data tren penjualan tidak cukup untuk periode ini.";
+      } else {
+        const values = last3Periods.map(getPemasukanPerPeriod);
+        let trenText = "Penjualan stabil selama 3 periode terakhir.";
+        if (values[0] < values[1] && values[1] < values[2]) trenText = "Penjualan naik selama 3 periode terakhir.";
+        else if (values[0] > values[1] && values[1] > values[2]) trenText = "Penjualan turun selama 3 periode terakhir.";
+        document.getElementById('indikator-tren').textContent = trenText;
+      }
+    }
+
+    document.getElementById('periode').addEventListener('change', updateIndikator);
+
+    // Inisialisasi
+    updateIndikator();
+  </script>
+</body>
+
+</html>

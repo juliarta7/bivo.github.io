@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tambah Barang - BIVO</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f0f4f8;
+      padding: 0 20px 40px;
+      color: #333;
+    }
+
+    header {
+      background-color: #2962ff;
+      color: white;
+      padding: 15px 20px;
+      font-size: 1.8em;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      display: flex;
+      align-items: center;
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header button.back-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.3em;
+      cursor: pointer;
+      margin-right: 15px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+    }
+
+    header button.back-btn:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .form-container {
+      margin: 25px auto 40px;
+      max-width: 520px;
+      background: white;
+      padding: 25px 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+      margin-bottom: 25px;
+      position: relative;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: #2962ff;
+      font-size: 1.1em;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 45px 12px 12px;
+      font-size: 1.05em;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      transition: border-color 0.3s ease;
+      box-sizing: border-box;
+      background-color: #e9ecef;
+      cursor: not-allowed;
+      color: #555;
+    }
+
+    input[type="text"]:focus {
+      border-color: #2962ff;
+      outline: none;
+    }
+
+    /* Tombol mic di kanan input */
+    button.mic-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #2962ff;
+      border: none;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.3em;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    button.mic-btn:hover {
+      background-color: #0039cb;
+    }
+
+    .instruction {
+      font-size: 0.9em;
+      color: #555;
+      margin-top: 5px;
+      font-style: italic;
+      min-height: 20px;
+      text-align: left;
+    }
+
+    button#save-btn {
+      background-color: #2962ff;
+      color: white;
+      border: none;
+      padding: 15px;
+      font-size: 1.2em;
+      border-radius: 10px;
+      width: 100%;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.3s ease;
+      font-weight: 700;
+      box-shadow: 0 3px 8px rgba(41, 98, 255, 0.5);
+      margin-top: 10px;
+    }
+
+    button#save-btn.enabled {
+      opacity: 1;
+      cursor: pointer;
+    }
+
+    button#save-btn:disabled {
+      cursor: not-allowed;
+    }
+
+    /* Daftar barang */
+    .list-container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .list-container h2 {
+      color: #2962ff;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.8em;
+      letter-spacing: 1px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    }
+
+    th,
+    td {
+      padding: 14px 18px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+      font-size: 1em;
+    }
+
+    th {
+      background-color: #2962ff;
+      color: white;
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Tombol hapus di tabel */
+    button.delete-row-btn {
+      background-color: #e53935;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+
+    button.delete-row-btn:hover {
+      background-color: #ab000d;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .form-container,
+      .list-container {
+        padding: 15px;
+        width: 100%;
+      }
+
+      button.mic-btn {
+        padding: 8px 12px;
+        font-size: 1.1em;
+        right: 10px;
+      }
+
+      th,
+      td {
+        font-size: 0.9em;
+        padding: 10px 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <button class="back-btn" title="Kembali ke Beranda" onclick="location.href='index.html'">&#8592;</button>
+    Tambah Barang
+  </header>
+
+  <section class="form-container">
+    <form id="formTambahBarang" onsubmit="return false;">
+      <!-- Nama Barang -->
+      <div class="form-group">
+        <label for="namaBarang">Nama Barang</label>
+        <input type="text" id="namaBarang" name="namaBarang" placeholder="Isi dengan suara" readonly />
+        <button type="button" class="mic-btn" data-field="namaBarang" title="Mulai input suara Nama Barang">&#127908;</button>
+        <div class="instruction" id="instruction-namaBarang"></div>
+      </div>
+
+      <!-- Jumlah -->
+      <div class="form-group">
+        <label for="jumlah">Jumlah</label>
+        <input type="text" id="jumlah" name="jumlah" placeholder="Isi dengan suara" readonly />
+        <button type="button" class="mic-btn" data-field="jumlah" title="Mulai input suara Jumlah">&#127908;</button>
+        <div class="instruction" id="instruction-jumlah"></div>
+      </div>
+
+      <!-- Harga Modal -->
+      <div class="form-group">
+        <label for="hargaModal">Harga Modal</label>
+        <input type="text" id="hargaModal" name="hargaModal" placeholder="Isi dengan suara" readonly />
+        <button type="button" class="mic-btn" data-field="hargaModal" title="Mulai input suara Harga Modal">&#127908;</button>
+        <div class="instruction" id="instruction-hargaModal"></div>
+      </div>
+
+      <!-- Harga Jual -->
+      <div class="form-group">
+        <label for="hargaJual">Harga Jual</label>
+        <input type="text" id="hargaJual" name="hargaJual" placeholder="Isi dengan suara" readonly />
+        <button type="button" class="mic-btn" data-field="hargaJual" title="Mulai input suara Harga Jual">&#127908;</button>
+        <div class="instruction" id="instruction-hargaJual"></div>
+      </div>
+
+      <button id="save-btn" disabled>Simpan</button>
+    </form>
+  </section>
+
+  <section class="list-container">
+    <h2>Daftar Barang</h2>
+    <table id="tabelBarang">
+      <thead>
+        <tr>
+          <th>Nama Barang</th>
+          <th>Jumlah</th>
+          <th>Harga Modal</th>
+          <th>Harga Jual</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Data barang akan masuk di sini -->
+      </tbody>
+    </table>
+  </section>
+
+  <script>
+    // Key localStorage
+    const STORAGE_KEY = 'bivo_daftar_barang';
+
+    // Elemen penting
+    const form = document.getElementById('formTambahBarang');
+    const saveBtn = document.getElementById('save-btn');
+    const tabelBody = document.querySelector('#tabelBarang tbody');
+
+    // Input fields
+    const inputs = {
+      namaBarang: document.getElementById('namaBarang'),
+      jumlah: document.getElementById('jumlah'),
+      hargaModal: document.getElementById('hargaModal'),
+      hargaJual: document.getElementById('hargaJual'),
+    };
+
+    // Instruksi per field
+    const instructions = {
+      namaBarang: document.getElementById('instruction-namaBarang'),
+      jumlah: document.getElementById('instruction-jumlah'),
+      hargaModal: document.getElementById('instruction-hargaModal'),
+      hargaJual: document.getElementById('instruction-hargaJual'),
+    };
+
+    // Load data dari localStorage
+    let daftarBarang = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+    // Fungsi format angka ke Rp (contoh: 1000000 -> Rp 1.000.000)
+    function formatRupiah(angka) {
+      if (!angka) return '';
+      const numberString = angka.toString().replace(/[^,\d]/g, '');
+      const split = numberString.split(',');
+      let sisa = split[0].length % 3;
+      let rupiah = split[0].substr(0, sisa);
+      const ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+      if (ribuan) {
+        const separator = sisa ? '.' : '';
+        rupiah += separator + ribuan.join('.');
+      }
+
+      rupiah = split[1] !== undefined ? rupiah + ',' + split[1] : rupiah;
+      return rupiah ? 'Rp ' + rupiah : '';
+    }
+
+    // Fungsi untuk menghilangkan format Rp dan titik, agar dapat disimpan sebagai angka
+    function unformatRupiah(formatted) {
+      return formatted.replace(/[^0-9]/g, '');
+    }
+
+    // Render tabel daftar barang
+    function renderTabel() {
+      tabelBody.innerHTML = '';
+      if (daftarBarang.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="5" style="color:#999; font-style:italic;">Belum ada data barang</td>`;
+        tabelBody.appendChild(tr);
+        return;
+      }
+      daftarBarang.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.namaBarang}</td>
+          <td>${item.jumlah}</td>
+          <td>${formatRupiah(item.hargaModal)}</td>
+          <td>${formatRupiah(item.hargaJual)}</td>
+          <td><button class="delete-row-btn" data-index="${index}" title="Hapus data ini">Hapus</button></td>
+        `;
+        tabelBody.appendChild(tr);
+      });
+      // Pasang event hapus
+      document.querySelectorAll('.delete-row-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = Number(btn.getAttribute('data-index'));
+          hapusBarang(idx);
+        });
+      });
+    }
+
+    // Simpan data ke localStorage
+    function simpanKeStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(daftarBarang));
+    }
+
+    // Tambah barang baru
+    function tambahBarang(data) {
+      daftarBarang.push(data);
+      simpanKeStorage();
+      renderTabel();
+    }
+
+    // Hapus barang berdasarkan index
+    function hapusBarang(index) {
+      if (index >= 0 && index < daftarBarang.length) {
+        daftarBarang.splice(index, 1);
+        simpanKeStorage();
+        renderTabel();
+      }
+    }
+
+    // Periksa apakah semua input terisi valid
+    function cekValidasi() {
+      const namaValid = inputs.namaBarang.value.trim() !== '';
+      const jumlahVal = inputs.jumlah.value.trim();
+      const hargaModalVal = unformatRupiah(inputs.hargaModal.value);
+      const hargaJualVal = unformatRupiah(inputs.hargaJual.value);
+
+      const jumlahValid = jumlahVal !== '' && /^\d+$/.test(jumlahVal) && Number(jumlahVal) > 0;
+      const hargaModalValid = hargaModalVal !== '' && Number(hargaModalVal) >= 0;
+      const hargaJualValid = hargaJualVal !== '' && Number(hargaJualVal) >= 0;
+
+      const valid = namaValid && jumlahValid && hargaModalValid && hargaJualValid;
+      saveBtn.disabled = !valid;
+      if (valid) {
+        saveBtn.classList.add('enabled');
+      } else {
+        saveBtn.classList.remove('enabled');
+      }
+    }
+
+    // Kosongkan semua input dan instruksi
+    function resetForm() {
+      Object.values(inputs).forEach(input => input.value = '');
+      Object.values(instructions).forEach(inst => inst.textContent = '');
+      cekValidasi();
+    }
+
+    // Event simpan
+    saveBtn.addEventListener('click', () => {
+      const data = {
+        namaBarang: inputs.namaBarang.value.trim(),
+        jumlah: inputs.jumlah.value.trim(),
+        hargaModal: unformatRupiah(inputs.hargaModal.value),
+        hargaJual: unformatRupiah(inputs.hargaJual.value),
+      };
+      tambahBarang(data);
+      resetForm();
+    });
+
+    // Speech Recognition API
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Browser Anda tidak mendukung fitur pengenalan suara. Gunakan browser terbaru seperti Chrome.');
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'id-ID';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      let currentField = null;
+
+      // Fungsi mulai rekam suara untuk field tertentu
+      function mulaiRekam(field) {
+        currentField = field;
+        instructions[field].textContent = `Silakan bicara untuk mengisi ${field === 'namaBarang' ? 'Nama Barang' : field === 'jumlah' ? 'Jumlah' : field === 'hargaModal' ? 'Harga Modal' : 'Harga Jual'}...`;
+        recognition.start();
+      }
+
+      recognition.onresult = (event) => {
+        const hasil = event.results[0][0].transcript.trim();
+        if (currentField) {
+          if (currentField === 'jumlah' || currentField === 'hargaModal' || currentField === 'hargaJual') {
+            // Ambil angka dari hasil suara
+            const angka = hasil.match(/\d+/g);
+            if (angka) {
+              const angkaGabung = angka.join('');
+              if (currentField === 'jumlah') {
+                inputs[currentField].value = angkaGabung;
+              } else {
+                inputs[currentField].value = formatRupiah(angkaGabung);
+              }
+            } else {
+              instructions[currentField].textContent = 'Tidak terdeteksi angka, coba lagi.';
+              return;
+            }
+          } else {
+            inputs[currentField].value = hasil;
+          }
+          instructions[currentField].textContent = `Input suara diterima: "${inputs[currentField].value}"`;
+          cekValidasi();
+          currentField = null;
+        }
+      };
+
+      recognition.onerror = (event) => {
+        if (currentField) {
+          instructions[currentField].textContent = 'Terjadi kesalahan, silakan coba lagi.';
+          currentField = null;
+        }
+      };
+
+      recognition.onend = () => {
+        if (currentField) {
+          instructions[currentField].textContent = 'Perekaman selesai.';
+          currentField = null;
+        }
+      };
+
+      // Pasang event click pada tombol mic
+      document.querySelectorAll('button.mic-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const field = btn.getAttribute('data-field');
+          mulaiRekam(field);
+        });
+      });
+    }
+
+    // Inisialisasi halaman
+    window.addEventListener('load', () => {
+      renderTabel();
+      cekValidasi();
+    });
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Catat Pemasukan - BIVO</title>
+  <style>
+    /* ... CSS sama seperti sebelumnya ... */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f0f4f8;
+      padding: 0 20px 40px;
+      color: #333;
+    }
+
+    header {
+      background-color: #2962ff;
+      color: white;
+      padding: 15px 20px;
+      font-size: 1.8em;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      display: flex;
+      align-items: center;
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header button.back-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.3em;
+      cursor: pointer;
+      margin-right: 15px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+    }
+
+    header button.back-btn:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .input-container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    button#start-speech {
+      background-color: #2962ff;
+      color: white;
+      border: none;
+      padding: 15px 25px;
+      font-size: 1.2em;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      box-shadow: 0 3px 8px rgba(41, 98, 255, 0.5);
+      transition: background-color 0.3s ease;
+    }
+
+    button#start-speech:hover {
+      background-color: #0039cb;
+    }
+
+    .instruction {
+      margin-top: 15px;
+      font-style: italic;
+      color: #555;
+      min-height: 24px;
+    }
+
+    .pesanan-container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .pesanan-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .pesanan-item:last-child {
+      border-bottom: none;
+    }
+
+    .total {
+      text-align: right;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    button#catatPesanan {
+      background-color: #2962ff;
+      color: white;
+      border: none;
+      padding: 15px;
+      font-size: 1.2em;
+      border-radius: 10px;
+      width: 100%;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      font-weight: 700;
+      box-shadow: 0 3px 8px rgba(41, 98, 255, 0.5);
+    }
+
+    button#catatPesanan:hover {
+      background-color: #0039cb;
+    }
+
+    .riwayat-container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .riwayat-item {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .riwayat-item:last-child {
+      border-bottom: none;
+    }
+
+    button.hapus-pesanan {
+      background-color: #e53935;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      font-weight: 600;
+    }
+
+    button.hapus-pesanan:hover {
+      background-color: #ab000d;
+    }
+
+    .riwayat-info {
+      max-width: 85%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <button class="back-btn" title="Kembali ke Beranda" onclick="location.href='index.html'">&#8592;</button>
+    Catat Pemasukan
+  </header>
+
+  <div class="input-container">
+    <button id="start-speech">Mulai Input Pemasukan dengan Suara</button>
+    <div class="instruction" id="instruction">Klik tombol dan sebutkan pemasukan, misal: "ayam goreng satu"</div>
+  </div>
+
+  <div class="pesanan-container">
+    <h2>Pemasukan</h2>
+    <div id="daftarPesanan"></div>
+    <div class="total">
+      Harga Kotor: <span id="hargaKotor">Rp 0</span><br />
+      Harga Bersih: <span id="hargaBersih">Rp 0</span>
+    </div>
+  </div>
+
+  <button id="catatPesanan">Catat Pemasukan</button>
+
+  <div class="riwayat-container">
+    <h2>Riwayat Pemasukan</h2>
+    <div id="riwayatPesanan"></div>
+  </div>
+
+  <script>
+    // Fungsi ambil data barang dari localStorage (key sesuai tambah-barang.html)
+    function ambilDataBarang() {
+      const data = localStorage.getItem('bivo_daftar_barang');
+      if (!data) return null;
+      try {
+        const arr = JSON.parse(data);
+        return arr.map(item => ({
+          nama: item.namaBarang.toLowerCase(),
+          jumlah: Number(item.jumlah),
+          hargaModal: Number(item.hargaModal),
+          hargaJual: Number(item.hargaJual)
+        }));
+      } catch {
+        return null;
+      }
+    }
+
+    let daftarBarang = ambilDataBarang();
+
+    if (!daftarBarang || daftarBarang.length === 0) {
+      alert('Data barang kosong! Pastikan sudah mengisi data di tambah-barang.html');
+      daftarBarang = [
+        { nama: "ayam goreng", jumlah: 10, hargaModal: 20000, hargaJual: 25000 },
+        { nama: "nasi putih", jumlah: 50, hargaModal: 5000, hargaJual: 8000 },
+        { nama: "es teh", jumlah: 20, hargaModal: 5000, hargaJual: 7000 }
+      ];
+    }
+
+    const startSpeechBtn = document.getElementById('start-speech');
+    const instructionDiv = document.getElementById('instruction');
+    const daftarPesananDiv = document.getElementById('daftarPesanan');
+    const hargaKotorSpan = document.getElementById('hargaKotor');
+    const hargaBersihSpan = document.getElementById('hargaBersih');
+    const catatPesananBtn = document.getElementById('catatPesanan');
+    const riwayatPesananDiv = document.getElementById('riwayatPesanan');
+
+    let pesanan = [];
+    let riwayat = JSON.parse(localStorage.getItem('riwayatPemasukan') || '[]');
+
+    function formatRupiah(angka) {
+      if (!angka) return 'Rp 0';
+      return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function renderPesanan() {
+      daftarPesananDiv.innerHTML = '';
+      let hargaKotor = 0;
+
+      pesanan.forEach((item) => {
+        const totalItem = item.hargaJual * item.jumlah;
+        hargaKotor += totalItem;
+
+        const div = document.createElement('div');
+        div.classList.add('pesanan-item');
+        div.innerHTML = `
+          <span>${item.nama} x ${item.jumlah}</span>
+          <span>${formatRupiah(totalItem)}</span>
+        `;
+        daftarPesananDiv.appendChild(div);
+      });
+
+      hargaKotorSpan.textContent = formatRupiah(hargaKotor);
+
+      // Contoh perhitungan harga bersih: harga kotor - 10% diskon
+      const diskon = 0.1 * hargaKotor;
+      const hargaBersih = hargaKotor - diskon;
+      hargaBersihSpan.textContent = formatRupiah(hargaBersih);
+    }
+
+    function renderRiwayat() {
+      riwayatPesananDiv.innerHTML = '';
+      if (riwayat.length === 0) {
+        riwayatPesananDiv.innerHTML = '<p style="font-style: italic; color: #555;">Belum ada riwayat pemasukan</p>';
+        return;
+      }
+      riwayat.forEach((entry, index) => {
+        const div = document.createElement('div');
+        div.classList.add('riwayat-item');
+        let daftarNama = entry.pesanan.map(p => `${p.nama} x ${p.jumlah}`).join(', ');
+        div.innerHTML = `
+          <div class="riwayat-info">
+            <strong>${entry.waktu}</strong><br>
+            Barang: ${daftarNama}<br>
+            Harga Kotor: ${formatRupiah(entry.hargaKotor)}<br>
+            Harga Bersih: ${formatRupiah(entry.hargaBersih)}
+          </div>
+          <button class="hapus-pesanan" data-index="${index}">Hapus</button>
+        `;
+        riwayatPesananDiv.appendChild(div);
+      });
+
+      document.querySelectorAll('.hapus-pesanan').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.index);
+          riwayat.splice(idx, 1);
+          localStorage.setItem('riwayatPemasukan', JSON.stringify(riwayat));
+          renderRiwayat();
+        });
+      });
+    }
+
+    function parseSpeech(text) {
+      text = text.toLowerCase();
+
+      const angkaMap = {
+        "satu": 1,
+        "dua": 2,
+        "tiga": 3,
+        "empat": 4,
+        "lima": 5,
+        "enam": 6,
+        "tujuh": 7,
+        "delapan": 8,
+        "sembilan": 9,
+        "sepuluh": 10
+      };
+
+      let jumlah = null;
+      const angkaDigit = text.match(/\b\d+\b/);
+      if (angkaDigit) {
+        jumlah = parseInt(angkaDigit[0]);
+      } else {
+        for (const [kata, nilai] of Object.entries(angkaMap)) {
+          if (text.includes(kata)) {
+            jumlah = nilai;
+            break;
+          }
+        }
+      }
+      if (!jumlah) jumlah = 1;
+
+      let namaBarang = null;
+      const sortedBarang = daftarBarang.slice().sort((a, b) => b.nama.length - a.nama.length);
+      for (const barang of sortedBarang) {
+        if (text.includes(barang.nama)) {
+          namaBarang = barang.nama;
+          break;
+        }
+      }
+      if (!namaBarang) return null;
+
+      return { nama: namaBarang, jumlah };
+    }
+
+    function tambahPesananDariSpeech(text) {
+      const parsed = parseSpeech(text);
+      if (!parsed) {
+        instructionDiv.textContent = 'Barang tidak dikenali atau tidak ada dalam daftar, coba ulangi.';
+        return;
+      }
+
+      const barangIndex = daftarBarang.findIndex(b => b.nama === parsed.nama);
+      if (barangIndex === -1) {
+        instructionDiv.textContent = 'Barang tidak ditemukan dalam daftar.';
+        return;
+      }
+
+      // Cek stok cukup atau tidak
+      if (daftarBarang[barangIndex].jumlah < parsed.jumlah) {
+        instructionDiv.textContent = `Stok ${parsed.nama} tidak cukup. Stok tersedia: ${daftarBarang[barangIndex].jumlah}`;
+        return;
+      }
+
+      const barang = daftarBarang[barangIndex];
+
+      const existing = pesanan.find(p => p.nama === barang.nama);
+      if (existing) {
+        // Cek stok total jika digabung
+        if (daftarBarang[barangIndex].jumlah < existing.jumlah + parsed.jumlah) {
+          instructionDiv.textContent = `Stok ${parsed.nama} tidak cukup untuk jumlah total. Stok tersedia: ${daftarBarang[barangIndex].jumlah}`;
+          return;
+        }
+        existing.jumlah += parsed.jumlah;
+      } else {
+        pesanan.push({
+          nama: barang.nama,
+          jumlah: parsed.jumlah,
+          hargaModal: barang.hargaModal,
+          hargaJual: barang.hargaJual
+        });
+      }
+
+      instructionDiv.textContent = `Pemasukan ditambahkan: ${barang.nama} x ${parsed.jumlah}`;
+      renderPesanan();
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      instructionDiv.textContent = 'Browser Anda tidak mendukung pengenalan suara.';
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'id-ID';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      startSpeechBtn.addEventListener('click', () => {
+        instructionDiv.textContent = 'Silakan sebutkan pemasukan...';
+        recognition.start();
+      });
+
+      recognition.onresult = (event) => {
+        const speechResult = event.results[0][0].transcript;
+        tambahPesananDariSpeech(speechResult);
+      };
+
+      recognition.onerror = () => {
+        instructionDiv.textContent = 'Error pengenalan suara, coba lagi.';
+      };
+
+      recognition.onend = () => {
+        instructionDiv.textContent += ' (Klik tombol untuk input pemasukan berikutnya)';
+      };
+    }
+
+    catatPesananBtn.addEventListener('click', () => {
+      if (pesanan.length === 0) {
+        alert('Belum ada pemasukan untuk dicatat.');
+        return;
+      }
+
+      const waktu = new Date().toLocaleString();
+      const hargaKotor = pesanan.reduce((acc, item) => acc + item.hargaJual * item.jumlah, 0);
+      const diskon = 0.1 * hargaKotor;
+      const hargaBersih = hargaKotor - diskon;
+
+      // Kurangi stok di daftarBarang
+      pesanan.forEach(item => {
+        const idx = daftarBarang.findIndex(b => b.nama === item.nama);
+        if (idx !== -1) {
+          daftarBarang[idx].jumlah = Math.max(0, daftarBarang[idx].jumlah - item.jumlah);
+        }
+      });
+
+      // Simpan stok yang sudah diperbarui ke localStorage
+      // Simpan dalam format asli (namaBarang, jumlah, hargaModal, hargaJual)
+      const stokSimpan = daftarBarang.map(b => ({
+        namaBarang: b.nama,
+        jumlah: b.jumlah,
+        hargaModal: b.hargaModal,
+        hargaJual: b.hargaJual
+      }));
+      localStorage.setItem('bivo_daftar_barang', JSON.stringify(stokSimpan));
+
+      // Tambah data baru di awal array riwayat
+      riwayat.unshift({
+        waktu,
+        pesanan: JSON.parse(JSON.stringify(pesanan)),
+        hargaKotor,
+        hargaBersih
+      });
+      localStorage.setItem('riwayatPemasukan', JSON.stringify(riwayat));
+
+      pesanan = [];
+      renderPesanan();
+      renderRiwayat();
+      instructionDiv.textContent = 'Pemasukan berhasil dicatat dan stok diperbarui.';
+    });
+
+    renderPesanan();
+    renderRiwayat();
+  </script>
+
+</body>
+
+</html>

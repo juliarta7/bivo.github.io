@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Laporan Harian - BIVO</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f0f4f8;
+      padding: 0 20px 40px;
+      color: #333;
+    }
+    header {
+      background-color: #2962ff;
+      color: white;
+      padding: 15px 20px;
+      font-size: 1.8em;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      display: flex;
+      align-items: center;
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header button.back-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.3em;
+      cursor: pointer;
+      margin-right: 15px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+    }
+    header button.back-btn:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    .container {
+      max-width: 900px;
+      margin: 30px auto 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      padding: 30px 20px 40px;
+    }
+    h2 {
+      text-align: center;
+      color: #2962ff;
+      margin-bottom: 30px;
+    }
+    .filter-bar {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    select {
+      padding: 10px 18px;
+      font-size: 1em;
+      border-radius: 8px;
+      border: 1.5px solid #2962ff;
+      background: #f6f8ff;
+      color: #2962ff;
+      font-weight: bold;
+    }
+    .summary-table {
+      margin: 30px auto 0;
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 480px;
+      background: #f8fafc;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .summary-table th, .summary-table td {
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 1.1em;
+    }
+    .summary-table th {
+      background: #2962ff;
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .summary-table td {
+      font-weight: bold;
+    }
+    .pemasukan { color: green; }
+    .pengeluaran { color: red; }
+    @media (max-width: 700px) {
+      .container { padding: 15px 5px 30px; }
+      .summary-table th, .summary-table td { padding: 10px 8px; font-size: 1em; }
+    }
+  </style>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <header>
+    <button class="back-btn" title="Kembali ke Beranda" onclick="location.href='index.html'">&#8592;</button>
+    Laporan Harian
+  </header>
+
+  <div class="container">
+    <h2>Perbandingan Pemasukan & Pengeluaran</h2>
+    <div class="filter-bar">
+      <label for="periode">Pilih Periode:</label>
+      <select id="periode">
+        <option value="Hari Ini">Hari Ini</option>
+        <option value="Kemarin">Kemarin</option>
+        <option value="Seminggu">Seminggu</option>
+        <option value="Sebulan">Sebulan</option>
+        <option value="Seluruhnya">Seluruhnya</option>
+      </select>
+    </div>
+    <canvas id="laporanChart" height="80"></canvas>
+    <table class="summary-table">
+      <tr>
+        <th>Total Pemasukan</th>
+        <td class="pemasukan" id="totalPemasukan">Rp 0</td>
+      </tr>
+      <tr>
+        <th>Total Pengeluaran</th>
+        <td class="pengeluaran" id="totalPengeluaran">Rp 0</td>
+      </tr>
+    </table>
+  </div>
+
+  <script>
+    // Helper: konversi tanggal string ke objek Date
+    function parseTanggal(str) {
+      let d = new Date(str);
+      if (isNaN(d)) {
+        const match = str.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+        if (match) {
+          const [ , dd, mm, yyyy ] = match;
+          d = new Date(`${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`);
+        }
+      }
+      return d;
+    }
+
+    // Ambil data dari localStorage
+    function getRiwayat(key) {
+      const data = localStorage.getItem(key);
+      if (!data) return [];
+      try {
+        return JSON.parse(data);
+      } catch {
+        return [];
+      }
+    }
+
+    // Hitung total pemasukan/pengeluaran untuk periode tertentu
+    function sumByPeriod(data, getNominal, filterFn) {
+      return data
+        .filter(filterFn)
+        .reduce((sum, item) => sum + getNominal(item), 0);
+    }
+
+    // Fungsi filter periode
+    function getPeriodFilters() {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+      const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 6);
+      const monthAgo = new Date(today); monthAgo.setMonth(today.getMonth() - 1);
+
+      return {
+        "Hari Ini": d => {
+          const t = parseTanggal(d.waktu);
+          return t >= today && t < new Date(today.getTime() + 24*60*60*1000);
+        },
+        "Kemarin": d => {
+          const t = parseTanggal(d.waktu);
+          return t >= yesterday && t < today;
+        },
+        "Seminggu": d => {
+          const t = parseTanggal(d.waktu);
+          return t >= weekAgo && t < new Date(today.getTime() + 24*60*60*1000);
+        },
+        "Sebulan": d => {
+          const t = parseTanggal(d.waktu);
+          return t >= monthAgo && t < new Date(today.getTime() + 24*60*60*1000);
+        },
+        "Seluruhnya": d => true
+      };
+    }
+
+    // Untuk pemasukan, gunakan field hargaKotor jika ada, jika tidak total
+    function getNominalPemasukan(item) {
+      return typeof item.hargaKotor === 'number'
+        ? item.hargaKotor
+        : (typeof item.total === 'number' ? item.total : 0);
+    }
+    // Untuk pengeluaran, gunakan field total
+    function getNominalPengeluaran(item) {
+      return typeof item.total === 'number' ? item.total : 0;
+    }
+
+    function formatRupiah(angka) {
+      if (!angka) return 'Rp 0';
+      return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    // Ambil data pemasukan dan pengeluaran
+    const pemasukan = getRiwayat('riwayatPemasukan');
+    const pengeluaran = getRiwayat('riwayatPengeluaran');
+
+    const periodFilters = getPeriodFilters();
+    const labels = Object.keys(periodFilters);
+
+    // Inisialisasi Chart.js
+    const ctx = document.getElementById('laporanChart').getContext('2d');
+    const laporanChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Pemasukan', 'Pengeluaran'],
+        datasets: [{
+          label: '',
+          data: [0, 0],
+          backgroundColor: ['green', 'red']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'Jumlah (Rp)' }
+          }
+        }
+      }
+    });
+
+    // Update chart dan tabel sesuai periode
+    function updateLaporanChart(period) {
+      const filterFn = periodFilters[period];
+      const totalPemasukan = sumByPeriod(pemasukan, getNominalPemasukan, filterFn);
+      const totalPengeluaran = sumByPeriod(pengeluaran, getNominalPengeluaran, filterFn);
+
+      laporanChart.data.datasets[0].data = [totalPemasukan, totalPengeluaran];
+      laporanChart.update();
+
+      document.getElementById('totalPemasukan').textContent = formatRupiah(totalPemasukan);
+      document.getElementById('totalPengeluaran').textContent = formatRupiah(totalPengeluaran);
+    }
+
+    // Event handler
+    const periodeSelect = document.getElementById('periode');
+    periodeSelect.addEventListener('change', function() {
+      updateLaporanChart(this.value);
+    });
+
+    // Inisialisasi tampilan awal
+    updateLaporanChart(periodeSelect.value);
+  </script>
+</body>
+</html>
