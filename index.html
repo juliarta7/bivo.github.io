@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mesin Antrian & Cetak Bluetooth ESC/POS</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  button { font-size: 18px; padding: 10px 20px; margin-top: 10px; }
+  #status { margin-top: 20px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h2>Mesin Antrian</h2>
+
+<label for="nomorAntrian">Nomor Antrian:</label>
+<input type="number" id="nomorAntrian" value="1" min="1" />
+<br />
+<button id="connectBtn">Hubungkan ke Printer Bluetooth</button>
+<button id="printBtn" disabled>Cetak Nomor Antrian</button>
+
+<div id="status">Status: Belum terhubung</div>
+
+<script src="https://cdn.jsdelivr.net/npm/esc-pos-encoder@1.1.0/dist/esc-pos-encoder.min.js"></script>
+<script>
+  let device;
+  let server;
+  let writeCharacteristic;
+
+  const connectBtn = document.getElementById('connectBtn');
+  const printBtn = document.getElementById('printBtn');
+  const status = document.getElementById('status');
+  const nomorInput = document.getElementById('nomorAntrian');
+
+  // UUID layanan dan karakteristik printer Bluetooth ESC/POS (umum)
+  const SERVICE_UUID = '000018f0-0000-1000-8000-00805f9b34fb'; // Bisa berbeda, sesuaikan printer
+  const CHARACTERISTIC_UUID = '00002af1-0000-1000-8000-00805f9b34fb'; // Sesuaikan
+
+  connectBtn.onclick = async () => {
+    try {
+      status.textContent = 'Status: Mencari perangkat...';
+      device = await navigator.bluetooth.requestDevice({
+        filters: [{ namePrefix: 'XP-58' }], // Sesuaikan nama printer Anda
+        optionalServices: [SERVICE_UUID]
+      });
+      status.textContent = 'Status: Menghubungkan ke perangkat...';
+      server = await device.gatt.connect();
+      const service = await server.getPrimaryService(SERVICE_UUID);
+      writeCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+      status.textContent = 'Status: Terhubung ke printer Bluetooth';
+      printBtn.disabled = false;
+    } catch (error) {
+      status.textContent = 'Status: Gagal terhubung - ' + error;
+    }
+  };
+
+  printBtn.onclick = async () => {
+    if (!writeCharacteristic) {
+      alert('Printer belum terhubung!');
+      return;
+    }
+    const nomor = nomorInput.value;
+    const encoder = new EscPosEncoder();
+    encoder.initialize();
+    encoder.setCharacterCodeTable('PC437_USA'); // Charset umum printer ESC/POS
+    encoder.align('center');
+    encoder.bold(true);
+    encoder.text('MESIN ANTRIAN\n');
+    encoder.bold(false);
+    encoder.feed(1);
+    encoder.size(2, 2);
+    encoder.text('NOMOR ANTRIAN\n');
+    encoder.size(4, 4);
+    encoder.text(nomor + '\n');
+    encoder.size(1, 1);
+    encoder.feed(2);
+    encoder.cut();
+
+    const result = encoder.encode();
+
+    try {
+      await writeCharacteristic.writeValue(result);
+      status.textContent = 'Status: Cetak berhasil';
+    } catch (err) {
+      status.textContent = 'Status: Gagal cetak - ' + err;
+    }
+  };
+</script>
+
+</body>
+</html>
